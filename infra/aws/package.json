@@ -1,0 +1,27 @@
+{
+  "name": "@aws-cdk-ecspresso-laravel-example-2024/aws",
+  "version": "0.1.0",
+  "bin": {
+    "aws": "bin/aws.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "cdk": "cdk",
+    "clean": "rimraf {bin,lib}/*.{d.ts,js}",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "watch": "tsc -w"
+  },
+  "devDependencies": {
+    "@types/node": "22.5.4",
+    "aws-cdk": "2.162.1",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.6.2"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.162.1",
+    "constructs": "^10.0.0",
+    "dotenv": "^16.4.5",
+    "source-map-support": "^0.5.21"
+  }
+}
