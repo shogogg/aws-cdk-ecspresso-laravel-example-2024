@@ -290,54 +290,46 @@ describe('LaravelAppStack', () => {
     })
   })
 
-  it('has 4 SSM Parameter for ecspresso', () => {
-    template.resourceCountIs('AWS::SSM::Parameter', 4)
-  })
-
-  it('has an SSM Parameter for the first subnet ID', () => {
+  it('has an Output for the first subnet ID', () => {
     const subnets = template.findResources('AWS::EC2::Subnet', {
       Properties: {
         MapPublicIpOnLaunch: false,
       },
     })
     const subnetIds = Object.keys(subnets)
-    template.hasResourceProperties('AWS::SSM::Parameter', {
-      Name: '/ecs/aws-cdk-ecspresso-laravel-example-2024/subnet-id-a',
+    template.hasOutput('PrivateSubnetAz1', {
       Value: { Ref: subnetIds[0] },
     })
   })
 
-  it('has an SSM Parameter for the second subnet ID', () => {
+  it('has an Output for the second subnet ID', () => {
     const subnets = template.findResources('AWS::EC2::Subnet', {
       Properties: {
         MapPublicIpOnLaunch: false,
       },
     })
     const subnetIds = Object.keys(subnets)
-    template.hasResourceProperties('AWS::SSM::Parameter', {
-      Name: '/ecs/aws-cdk-ecspresso-laravel-example-2024/subnet-id-c',
+    template.hasOutput('PrivateSubnetAz2', {
       Value: { Ref: subnetIds[1] },
     })
   })
 
-  it('has an SSM Parameter for the security group ID', () => {
+  it('has an Output for the security group ID', () => {
     const securityGroups = template.findResources('AWS::EC2::SecurityGroup', {
       Properties: {
         GroupDescription: 'TestStack/EcsSecurityGroup',
       },
     })
     const [securityGroupId] = Object.keys(securityGroups)
-    template.hasResourceProperties('AWS::SSM::Parameter', {
-      Name: '/ecs/aws-cdk-ecspresso-laravel-example-2024/security-group-id',
+    template.hasOutput('EcsSecurityGroupId', {
       Value: { 'Fn::GetAtt': [securityGroupId, 'GroupId'] },
     })
   })
 
-  it('has an SSM Parameter for the target group ARN', () => {
+  it('has an Output for the target group ARN', () => {
     const targetGroups = template.findResources('AWS::ElasticLoadBalancingV2::TargetGroup')
     const [targetGroupArn] = Object.keys(targetGroups)
-    template.hasResourceProperties('AWS::SSM::Parameter', {
-      Name: '/ecs/aws-cdk-ecspresso-laravel-example-2024/target-group-arn',
+    template.hasOutput('AlbTargetGroupArn', {
       Value: { Ref: targetGroupArn },
     })
   })

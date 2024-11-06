@@ -4,7 +4,6 @@ import * as ecr from 'aws-cdk-lib/aws-ecr'
 import * as ecs from 'aws-cdk-lib/aws-ecs'
 import * as route53 from 'aws-cdk-lib/aws-route53'
 import * as s3 from 'aws-cdk-lib/aws-s3'
-import * as ssm from 'aws-cdk-lib/aws-ssm'
 import type { Construct } from 'constructs'
 import { ApplicationLoadBalancer } from './constructs/application-load-balancer'
 
@@ -98,22 +97,18 @@ export class LaravelAppStack extends cdk.Stack {
     ecsSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(HTTP))
     ecsSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(HTTPS))
 
-    // SSM Parameters for ecspresso
-    new ssm.StringParameter(this, 'EcspressoSubnetId1Param', {
-      parameterName: '/ecs/aws-cdk-ecspresso-laravel-example-2024/subnet-id-a',
-      stringValue: vpcSubnetIds[0],
+    // Cloudformation Outputs
+    new cdk.CfnOutput(this, 'PrivateSubnetAz1', {
+      value: vpcSubnetIds[0],
     })
-    new ssm.StringParameter(this, 'EcspressoSubnetId2Param', {
-      parameterName: '/ecs/aws-cdk-ecspresso-laravel-example-2024/subnet-id-c',
-      stringValue: vpcSubnetIds[1],
+    new cdk.CfnOutput(this, 'PrivateSubnetAz2', {
+      value: vpcSubnetIds[1],
     })
-    new ssm.StringParameter(this, 'EcspressoSecurityGroupIdParam', {
-      parameterName: '/ecs/aws-cdk-ecspresso-laravel-example-2024/security-group-id',
-      stringValue: ecsSecurityGroup.securityGroupId,
+    new cdk.CfnOutput(this, 'EcsSecurityGroupId', {
+      value: ecsSecurityGroup.securityGroupId,
     })
-    new ssm.StringParameter(this, 'EcspressoTargetGroupArnParam', {
-      parameterName: '/ecs/aws-cdk-ecspresso-laravel-example-2024/target-group-arn',
-      stringValue: alb.targetGroupArn,
+    new cdk.CfnOutput(this, 'AlbTargetGroupArn', {
+      value: alb.targetGroupArn,
     })
   }
 }
