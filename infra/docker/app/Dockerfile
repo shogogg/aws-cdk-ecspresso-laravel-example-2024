@@ -65,15 +65,6 @@ ENTRYPOINT ["docker-php-entrypoint"]
 CMD ["php"]
 
 #
-# app-cli-dev
-#
-FROM app-cli-base AS app-cli-dev
-
-COPY infra/docker/app/assets/app-cli-dev/app-cli-dev.ini /usr/local/etc/php/conf.d/
-
-RUN set -eux; yes "" | pecl install xdebug; docker-php-ext-enable xdebug
-
-#
 # app-server-base
 #
 FROM app-base AS app-server-base
@@ -84,6 +75,15 @@ COPY infra/docker/app/assets/app-server-base/www.conf /usr/local/etc/php-fpm.d/
 VOLUME /var/run/php-fpm
 
 CMD ["php-fpm"]
+
+#
+# app-cli-dev
+#
+FROM app-cli-base AS app-cli-dev
+
+COPY infra/docker/app/assets/app-cli-dev/app-cli-dev.ini /usr/local/etc/php/conf.d/
+
+RUN set -eux; yes "" | pecl install xdebug; docker-php-ext-enable xdebug
 
 #
 # app-server-dev
