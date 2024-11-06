@@ -1,0 +1,14 @@
+/**
+!/app
+!/bootstrap
+!/config
+!/database
+!/infra/docker
+!/public
+!/resources
+!/routes
+!/storage
+!.env
+!artisan
+!composer.*
+!vite.config.js

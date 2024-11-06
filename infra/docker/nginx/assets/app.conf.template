@@ -1,6 +1,6 @@
 server {
   listen 8080;
-  server_name nginx localhost;
+  server_name $APP_DOMAIN_NAME;
 
   charset utf-8;
   index index.php;

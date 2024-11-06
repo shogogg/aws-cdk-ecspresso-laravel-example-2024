@@ -22,6 +22,9 @@ describe('LaravelAppStack', () => {
           { id: 'baz', repositoryName: 'laravel-app/baz' },
         ],
       },
+      ecs: {
+        clusterName: 'test-laravel-app-cluster',
+      },
       s3: {
         logBucketName: 'example-log-storage',
       },
@@ -286,7 +289,7 @@ describe('LaravelAppStack', () => {
 
   it('has an ECS Cluster with the specified name', () => {
     template.hasResourceProperties('AWS::ECS::Cluster', {
-      ClusterName: 'LaravelApp',
+      ClusterName: 'test-laravel-app-cluster',
     })
   })
 

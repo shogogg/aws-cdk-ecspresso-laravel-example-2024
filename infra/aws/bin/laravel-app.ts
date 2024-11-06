@@ -9,10 +9,8 @@ dotenv.config()
 
 const account = process.env.APP_AWS_ACCOUNT ?? process.env.CDK_DEFAULT_ACCOUNT
 const region = process.env.APP_AWS_REGION ?? process.env.CDK_DEFAULT_REGION
+
 const stackName = process.env.APP_STACK_NAME ?? 'ExampleLaravelAppStack'
-const hostedZoneName = process.env.APP_HOSTED_ZONE_NAME ?? 'example.com'
-const domainName = process.env.APP_DOMAIN_NAME ?? 'app.example.com'
-const logBucketName = process.env.APP_LOG_BUCKET_NAME ?? 'example-log-bucket'
 
 const app = new cdk.App()
 new LaravelAppStack(app, stackName, {
@@ -20,16 +18,20 @@ new LaravelAppStack(app, stackName, {
     account,
     region,
   },
-  hostedZoneName,
-  domainName,
+  hostedZoneName: process.env.APP_HOSTED_ZONE_NAME ?? 'example.com',
+  domainName: process.env.APP_DOMAIN_NAME ?? 'app.example.com',
   ecr: {
     repositories: [
-      { id: 'App', repositoryName: 'aws-cdk-ecspresso-laravel-example-2024/app' },
-      { id: 'Nginx', repositoryName: 'aws-cdk-ecspresso-laravel-example-2024/nginx' },
+      { id: 'Nginx', repositoryName: 'aws-cdk-ecspresso-laravel-example-2024/nginx-prod' },
+      { id: 'AppCli', repositoryName: 'aws-cdk-ecspresso-laravel-example-2024/app-cli-prod' },
+      { id: 'AppServer', repositoryName: 'aws-cdk-ecspresso-laravel-example-2024/app-server-prod' },
     ],
   },
+  ecs: {
+    clusterName: process.env.APP_ECS_CLUSTER_NAME ?? 'example-laravel-app-cluster',
+  },
   s3: {
-    logBucketName,
+    logBucketName: process.env.APP_LOG_BUCKET_NAME ?? 'example-log-bucket',
   },
   vpc: {
     cidr: '192.168.0.0/16',

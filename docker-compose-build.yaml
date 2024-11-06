@@ -1,0 +1,23 @@
+---
+services:
+  app-cli:
+    build:
+      context: .
+      dockerfile: infra/docker/app/Dockerfile
+      target: app-cli-prod
+    image: aws-cdk-ecspresso-laravel-example-2024/app-cli-prod:latest
+  app-server:
+    build:
+      context: .
+      dockerfile: infra/docker/app/Dockerfile
+      target: app-server-prod
+    image: aws-cdk-ecspresso-laravel-example-2024/app-server-prod:latest
+  nginx:
+    build:
+      context: .
+      dockerfile: infra/docker/nginx/Dockerfile
+      target: nginx-prod
+      args:
+        - TIMEZONE=Asia/Tokyo
+        - APP_DOMAIN_NAME=${APP_DOMAIN_NAME}
+    image: aws-cdk-ecspresso-laravel-example-2024/nginx-prod:latest

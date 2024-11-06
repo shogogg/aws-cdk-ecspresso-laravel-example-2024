@@ -9,6 +9,7 @@
     "cdk": "cdk",
     "cdk:deploy": "cdk deploy",
     "cdk:destroy": "cdk destroy",
+    "cdk:diff": "cdk diff",
     "cdk:synth": "cdk synth",
     "clean": "rimraf {bin,lib}/*.{d.ts,js} {bin,lib}/**/*.{d.ts,js}",
     "test": "vitest run",

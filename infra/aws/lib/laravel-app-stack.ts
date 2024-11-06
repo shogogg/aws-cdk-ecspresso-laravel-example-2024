@@ -16,6 +16,9 @@ interface LaravelAppStackProps extends cdk.StackProps {
       repositoryName: string
     }>
   }
+  ecs: {
+    clusterName: string
+  }
   s3: {
     logBucketName: string
   }
@@ -88,7 +91,7 @@ export class LaravelAppStack extends cdk.Stack {
 
     // ECS: Cluster
     new ecs.Cluster(this, 'EcsCluster', {
-      clusterName: 'LaravelApp',
+      clusterName: props.ecs.clusterName,
       vpc,
     })
 

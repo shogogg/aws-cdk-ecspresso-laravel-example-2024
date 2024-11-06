@@ -60,7 +60,7 @@ FROM app-base AS app-cli-base
 
 COPY infra/docker/app/assets/app-cli-base/app-cli.ini /usr/local/etc/php/conf.d/
 
-ENTRYPOINT ["docker-php-entrypoint"]
+ENTRYPOINT docker-php-entrypoint
 
 CMD ["php"]
 
@@ -93,3 +93,33 @@ FROM app-server-base AS app-server-dev
 COPY infra/docker/app/assets/app-server-dev/app-server-dev.ini /usr/local/etc/php/conf.d/
 
 RUN set -eux; yes "" | pecl install xdebug; docker-php-ext-enable xdebug
+
+#
+# app-cli-prod
+#
+FROM app-cli-base AS app-cli-prod
+
+RUN mkdir -p /app
+RUN mv /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/
+COPY composer.* /app/
+RUN composer install --no-dev --no-autoloader --no-progress --no-scripts
+
+COPY . /app
+RUN composer dump-autoload --no-dev --optimize
+
+#
+# app-server-prod
+#
+FROM app-server-base AS app-server-prod
+
+RUN mkdir -p /app
+RUN mv /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/
+COPY composer.* /app/
+RUN composer install --no-dev --no-autoloader --no-progress --no-scripts
+
+COPY . /app
+RUN composer dump-autoload --no-dev --optimize

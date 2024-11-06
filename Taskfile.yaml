@@ -1,0 +1,71 @@
+version: 3
+
+dotenv:
+  - .env
+  - infra/aws/.env
+
+vars:
+  AWS_REGION: '{{.APP_AWS_REGION}}'
+  AWS_ECR_HOST: '{{.APP_AWS_ACCOUNT}}.dkr.ecr.{{.APP_AWS_REGION}}.amazonaws.com'
+  DOCKER_IMAGE_PREFIX: aws-cdk-ecspresso-laravel-example-2024
+  DOCKER_IMAGES:
+    - app-cli-prod
+    - app-server-prod
+    - nginx-prod
+
+tasks:
+  #
+  # AWS CDK tasks
+  #
+  cdk:deploy:
+    cmds:
+      - npm run cdk:deploy -w infra/aws
+  cdk:destroy:
+    cmds:
+      - npm run cdk:destroy -w infra/aws
+  cdk:diff:
+    cmds:
+      - npm run cdk:diff -w infra/aws
+  cdk:synth:
+    cmds:
+      - npm run cdk:synth -w infra/aws
+  #
+  # AWS ECR tasks
+  #
+  aws:ecr:login:
+    cmds:
+      - aws ecr get-login-password --region {{.APP_AWS_REGION}} | docker login --username AWS --password-stdin {{.AWS_ECR_HOST}}
+  aws:ecr:push:
+    deps:
+      - docker:build
+    vars:
+      DATE:
+        sh: date '+%Y%m%d%H%M%S'
+      REVISION:
+        sh: git rev-parse --short HEAD
+      TAG: '{{.DATE}}-{{.REVISION}}'
+    cmds:
+      - task: aws:ecr:login
+      - for: { var: DOCKER_IMAGES }
+        cmd: docker tag {{.DOCKER_IMAGE_PREFIX}}/{{.ITEM}}:latest {{.AWS_ECR_HOST}}/{{.DOCKER_IMAGE_PREFIX}}/{{.ITEM}}:{{.TAG}}
+      - for: { var: DOCKER_IMAGES }
+        cmd: docker tag {{.DOCKER_IMAGE_PREFIX}}/{{.ITEM}}:latest {{.AWS_ECR_HOST}}/{{.DOCKER_IMAGE_PREFIX}}/{{.ITEM}}:latest
+      - for: { var: DOCKER_IMAGES }
+        cmd: docker push {{.AWS_ECR_HOST}}/{{.DOCKER_IMAGE_PREFIX}}/{{.ITEM}}:{{.TAG}}
+      - for: { var: DOCKER_IMAGES }
+        cmd: docker push {{.AWS_ECR_HOST}}/{{.DOCKER_IMAGE_PREFIX}}/{{.ITEM}}:latest
+  #
+  # Docker tasks
+  #
+  docker:build:
+    cmds:
+      - docker compose -f docker-compose-build.yaml --env-file=infra/aws/.env build
+  docker:compose:build:
+    cmds:
+      - docker compose build
+  docker:compose:up:
+    cmds:
+      - docker compose up -d
+  docker:compose:down:
+    cmds:
+      - docker compose down

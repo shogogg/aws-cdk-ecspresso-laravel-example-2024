@@ -29,8 +29,20 @@ RUN mkdir -p /opt/var/cache/nginx && \
     cp -a /etc/passwd /opt/etc/passwd && \
     cp -a /etc/group /opt/etc/group && \
     cp -a /usr/share/zoneinfo/${TIMEZONE} /opt/etc/localtime && \
-    rm -rf /opt/etc/nginx/nginx.conf && \
-    rm -rf /opt/etc/nginx/conf.d/default.conf
+    rm -rf /opt/etc/nginx/*.conf && \
+    rm -rf /opt/etc/nginx/conf.d/*.conf
+
+#
+# nginx-config
+#
+FROM nginx-resources AS nginx-config
+
+ARG APP_DOMAIN_NAME="localhost"
+
+COPY infra/docker/nginx/assets/app.conf.template /tmp/
+
+RUN echo "$APP_DOMAIN_NAME" && \
+    envsubst '$APP_DOMAIN_NAME' < /tmp/app.conf.template > /opt/etc/nginx/conf.d/app.conf
 
 #
 # nginx-base
@@ -38,9 +50,10 @@ RUN mkdir -p /opt/var/cache/nginx && \
 FROM gcr.io/distroless/base-debian12:nonroot AS nginx-base
 
 COPY --from=nginx-resources /opt /
-COPY infra/docker/nginx/assets/nginx-base/ /etc/nginx/
+COPY infra/docker/nginx/assets/*.conf /etc/nginx/
 
 USER www-data
+
 EXPOSE 8080 8443
 
 CMD ["nginx"]
@@ -50,4 +63,13 @@ CMD ["nginx"]
 #
 FROM nginx-base AS nginx-dev
 
-COPY infra/docker/nginx/assets/nginx-dev/ /etc/nginx/
+COPY --from=nginx-config /opt/etc/nginx/conf.d/ /etc/nginx/conf.d/
+
+#
+# nginx-prod
+#
+FROM nginx-base AS nginx-prod
+
+COPY --from=nginx-config /opt/etc/nginx/conf.d/ /etc/nginx/conf.d/
+
+COPY public/ /app/public/

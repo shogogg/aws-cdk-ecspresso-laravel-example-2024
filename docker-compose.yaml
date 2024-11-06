@@ -18,6 +18,9 @@ services:
       context: .
       dockerfile: infra/docker/nginx/Dockerfile
       target: nginx-dev
+      args:
+        - TIMEZONE=Asia/Tokyo
+        - APP_DOMAIN_NAME=nginx localhost
     image: aws-cdk-ecspresso-laravel-example-2024/nginx-dev:latest
     restart: always
     ports:
