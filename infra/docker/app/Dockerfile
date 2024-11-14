@@ -109,6 +109,8 @@ RUN composer install --no-dev --no-autoloader --no-progress --no-scripts
 COPY . /app
 RUN composer dump-autoload --no-dev --optimize
 
+RUN chown -R www-data:www-data /app
+
 #
 # app-server-prod
 #
@@ -123,3 +125,5 @@ RUN composer install --no-dev --no-autoloader --no-progress --no-scripts
 
 COPY . /app
 RUN composer dump-autoload --no-dev --optimize
+
+RUN chown -R www-data:www-data /app
