@@ -29,6 +29,7 @@ new LaravelAppStack(app, stackName, {
   },
   ecs: {
     clusterName: process.env.APP_ECS_CLUSTER_NAME ?? 'example-laravel-app-cluster',
+    serviceName: process.env.APP_ECS_SERVICE_NAME ?? 'example-laravel-app-service',
   },
   s3: {
     logBucketName: process.env.APP_LOG_BUCKET_NAME ?? 'example-log-bucket',

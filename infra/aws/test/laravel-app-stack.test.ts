@@ -24,6 +24,7 @@ describe('LaravelAppStack', () => {
       },
       ecs: {
         clusterName: 'test-laravel-app-cluster',
+        serviceName: 'test-laravel-app-service',
       },
       s3: {
         logBucketName: 'example-log-storage',
@@ -129,19 +130,28 @@ describe('LaravelAppStack', () => {
     const [vpcId] = Object.keys(template.findResources('AWS::EC2::VPC'))
     template.hasResourceProperties('AWS::EC2::SecurityGroup', {
       GroupDescription: 'TestStack/EcsSecurityGroup',
-      SecurityGroupIngress: [
+      SecurityGroupEgress: [
         Match.objectLike({
-          FromPort: 80,
-          IpProtocol: 'tcp',
-          ToPort: 80,
-        }),
-        Match.objectLike({
-          FromPort: 443,
-          IpProtocol: 'tcp',
-          ToPort: 443,
+          CidrIp: '0.0.0.0/0',
         }),
       ],
       VpcId: { Ref: vpcId },
+    })
+  })
+
+  it('should allow traffic from the Application Load Balancer to the ECS', () => {
+    const securityGroups = template.findResources('AWS::EC2::SecurityGroup')
+    const [albSecurityGroupId] = Object.keys(securityGroups).filter(
+      ref => securityGroups[ref].Properties.GroupDescription === 'TestStack/Alb/SecurityGroup',
+    )
+    const [ecsSecurityGroupId] = Object.keys(securityGroups).filter(
+      ref => securityGroups[ref].Properties.GroupDescription === 'TestStack/EcsSecurityGroup',
+    )
+    template.hasResourceProperties('AWS::EC2::SecurityGroupIngress', {
+      FromPort: 8080,
+      ToPort: 8080,
+      GroupId: { 'Fn::GetAtt': [ecsSecurityGroupId, 'GroupId'] },
+      SourceSecurityGroupId: { 'Fn::GetAtt': [albSecurityGroupId, 'GroupId'] },
     })
   })
 
@@ -293,6 +303,54 @@ describe('LaravelAppStack', () => {
     })
   })
 
+  it('has an IAM Role', () => {
+    template.resourceCountIs('AWS::IAM::Role', 1)
+  })
+
+  it('has an IAM Role for ECS Task Execution', () => {
+    template.hasResourceProperties('AWS::IAM::Role', {
+      AssumeRolePolicyDocument: Match.objectLike({
+        Statement: [
+          {
+            Action: 'sts:AssumeRole',
+            Effect: 'Allow',
+            Principal: { Service: 'ecs-tasks.amazonaws.com' },
+          },
+        ],
+      }),
+      ManagedPolicyArns: [
+        Match.objectLike({
+          'Fn::Join': ['', ['arn:', { Ref: 'AWS::Partition' }, ':iam::aws:policy/PowerUserAccess']],
+        }),
+      ],
+    })
+  })
+
+  it('has 3 Log Groups', () => {
+    template.resourceCountIs('AWS::Logs::LogGroup', 3)
+  })
+
+  it('has a Log Group for nginx', () => {
+    template.hasResourceProperties('AWS::Logs::LogGroup', {
+      LogGroupName: '/ecs/test-laravel-app-service/nginx',
+      RetentionInDays: 3653,
+    })
+  })
+
+  it('has a Log Group for app-server', () => {
+    template.hasResourceProperties('AWS::Logs::LogGroup', {
+      LogGroupName: '/ecs/test-laravel-app-service/app-server',
+      RetentionInDays: 3653,
+    })
+  })
+
+  it('has a Log Group for app-batch', () => {
+    template.hasResourceProperties('AWS::Logs::LogGroup', {
+      LogGroupName: '/ecs/test-laravel-app-service/app-batch',
+      RetentionInDays: 3653,
+    })
+  })
+
   it('has an Output for the first subnet ID', () => {
     const subnets = template.findResources('AWS::EC2::Subnet', {
       Properties: {
@@ -334,6 +392,14 @@ describe('LaravelAppStack', () => {
     const [targetGroupArn] = Object.keys(targetGroups)
     template.hasOutput('AlbTargetGroupArn', {
       Value: { Ref: targetGroupArn },
+    })
+  })
+
+  it('has an Output for the ECS Task Execution Role ARN', () => {
+    const roles = template.findResources('AWS::IAM::Role')
+    const [roleArn] = Object.keys(roles)
+    template.hasOutput('EcsTaskExecutionRoleArn', {
+      Value: { 'Fn::GetAtt': [roleArn, 'Arn'] },
     })
   })
 })

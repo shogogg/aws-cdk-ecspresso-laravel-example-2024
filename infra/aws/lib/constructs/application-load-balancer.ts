@@ -19,6 +19,7 @@ export interface ApplicationLoadBalancerProps {
 
 export class ApplicationLoadBalancer extends Construct {
   public readonly targetGroupArn: string
+  public readonly securityGroup: ec2.ISecurityGroup
 
   constructor(scope: Construct, id: string, props: ApplicationLoadBalancerProps) {
     super(scope, id)
@@ -89,5 +90,6 @@ export class ApplicationLoadBalancer extends Construct {
 
     // Assign to class properties
     this.targetGroupArn = targetGroup.targetGroupArn
+    this.securityGroup = securityGroup
   }
 }

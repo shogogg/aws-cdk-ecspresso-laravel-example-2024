@@ -2,6 +2,8 @@ import * as cdk from 'aws-cdk-lib'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import * as ecr from 'aws-cdk-lib/aws-ecr'
 import * as ecs from 'aws-cdk-lib/aws-ecs'
+import * as iam from 'aws-cdk-lib/aws-iam'
+import * as logs from 'aws-cdk-lib/aws-logs'
 import * as route53 from 'aws-cdk-lib/aws-route53'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 import type { Construct } from 'constructs'
@@ -18,6 +20,7 @@ interface LaravelAppStackProps extends cdk.StackProps {
   }
   ecs: {
     clusterName: string
+    serviceName: string
   }
   s3: {
     logBucketName: string
@@ -26,9 +29,6 @@ interface LaravelAppStackProps extends cdk.StackProps {
     cidr: string
   }
 }
-
-const HTTP = 80
-const HTTPS = 443
 
 export class LaravelAppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: LaravelAppStackProps) {
@@ -95,10 +95,29 @@ export class LaravelAppStack extends cdk.Stack {
       vpc,
     })
 
+    // IAM: Role for ECS
+    const ecsTaskExecutionRole = new iam.Role(this, 'EcsTaskExecutionRole', {
+      assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('PowerUserAccess')],
+    })
+
+    // CloudWatch: Log Groups for ECS
+    new logs.LogGroup(this, 'EcsNginxLogGroup', {
+      logGroupName: `/ecs/${props.ecs.serviceName}/nginx`,
+      retention: logs.RetentionDays.TEN_YEARS,
+    })
+    new logs.LogGroup(this, 'EcsAppServerLogGroup', {
+      logGroupName: `/ecs/${props.ecs.serviceName}/app-server`,
+      retention: logs.RetentionDays.TEN_YEARS,
+    })
+    new logs.LogGroup(this, 'EcsAppBatchLogGroup', {
+      logGroupName: `/ecs/${props.ecs.serviceName}/app-batch`,
+      retention: logs.RetentionDays.TEN_YEARS,
+    })
+
     // Security Group: for ECS
     const ecsSecurityGroup = new ec2.SecurityGroup(this, 'EcsSecurityGroup', { vpc })
-    ecsSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(HTTP))
-    ecsSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(HTTPS))
+    ecsSecurityGroup.addIngressRule(alb.securityGroup, ec2.Port.tcp(8080))
 
     // Cloudformation Outputs
     new cdk.CfnOutput(this, 'PrivateSubnetAz1', {
@@ -112,6 +131,9 @@ export class LaravelAppStack extends cdk.Stack {
     })
     new cdk.CfnOutput(this, 'AlbTargetGroupArn', {
       value: alb.targetGroupArn,
+    })
+    new cdk.CfnOutput(this, 'EcsTaskExecutionRoleArn', {
+      value: ecsTaskExecutionRole.roleArn,
     })
   }
 }
