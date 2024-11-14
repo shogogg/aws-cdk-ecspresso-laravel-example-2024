@@ -15,6 +15,21 @@ vars:
 
 tasks:
   #
+  # Docker tasks
+  #
+  docker:build:
+    cmds:
+      - docker compose -f docker-compose-build.yaml --env-file=infra/aws/.env build
+  docker:compose:build:
+    cmds:
+      - docker compose build
+  docker:compose:up:
+    cmds:
+      - docker compose up -d
+  docker:compose:down:
+    cmds:
+      - docker compose down
+  #
   # AWS CDK tasks
   #
   cdk:deploy:
@@ -54,18 +69,3 @@ tasks:
         cmd: docker push {{.AWS_ECR_HOST}}/{{.DOCKER_IMAGE_PREFIX}}/{{.ITEM}}:{{.TAG}}
       - for: { var: DOCKER_IMAGES }
         cmd: docker push {{.AWS_ECR_HOST}}/{{.DOCKER_IMAGE_PREFIX}}/{{.ITEM}}:latest
-  #
-  # Docker tasks
-  #
-  docker:build:
-    cmds:
-      - docker compose -f docker-compose-build.yaml --env-file=infra/aws/.env build
-  docker:compose:build:
-    cmds:
-      - docker compose build
-  docker:compose:up:
-    cmds:
-      - docker compose up -d
-  docker:compose:down:
-    cmds:
-      - docker compose down
