@@ -1,0 +1,14 @@
+---
+# ECS クラスターを配置する AWS リージョン
+region: "{{ env `APP_AWS_REGION` `ap-northeast-1` }}"
+# ECS クラスター名
+cluster: "{{ must_env `APP_ECS_CLUSTER_NAME` }}"
+# ECS サービス名
+service: example-laravel-app-service
+# ECS サービス定義ファイル
+service_definition: infra/aws/ecspresso/ecs-service-definition.json
+# ECS タスク定義ファイル
+task_definition: infra/aws/ecspresso/ecs-service-task-definition.json
+# プラグイン
+plugins:
+  - name: cloudformation

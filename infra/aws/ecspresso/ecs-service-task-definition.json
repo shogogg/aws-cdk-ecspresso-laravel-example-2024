@@ -1,0 +1,54 @@
+{
+  "family": "{{ must_env `APP_ECS_CLUSTER_NAME` }}-service-task-definition",
+  "cpu": "256",
+  "memory": "1024",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "executionRoleArn": "{{ cfn_output `ExampleLaravelAppStack` `EcsTaskExecutionRoleArn` }}",
+  "containerDefinitions": [
+    {
+      "name": "app-server",
+      "image": "{{ must_env `APP_AWS_ACCOUNT` }}.dkr.ecr.{{ must_env `APP_AWS_REGION` }}.amazonaws.com/aws-cdk-ecspresso-laravel-example-2024/app-server-prod:{{ env `TAG` `latest` }}",
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/{{ must_env `APP_ECS_SERVICE_NAME` }}/app-server",
+          "awslogs-region": "{{ must_env `APP_AWS_REGION` }}",
+          "awslogs-stream-prefix": "app-server"
+        }
+      }
+    },
+    {
+      "name": "nginx",
+      "image": "{{ must_env `APP_AWS_ACCOUNT` }}.dkr.ecr.{{ must_env `APP_AWS_REGION` }}.amazonaws.com/aws-cdk-ecspresso-laravel-example-2024/nginx-prod:{{ env `TAG` `latest` }}",
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/{{ must_env `APP_ECS_SERVICE_NAME` }}/nginx",
+          "awslogs-region": "{{ must_env `APP_AWS_REGION` }}",
+          "awslogs-stream-prefix": "nginx"
+        }
+      },
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "dependsOn": [
+        {
+          "containerName": "app-server",
+          "condition": "START"
+        }
+      ],
+      "volumesFrom": [
+        {
+          "sourceContainer": "app-server",
+          "readOnly": true
+        }
+      ]
+    }
+  ]
+}

@@ -12,6 +12,11 @@ vars:
     - app-cli-prod
     - app-server-prod
     - nginx-prod
+  DATE:
+    sh: date '+%Y%m%d%H%M%S'
+  REVISION:
+    sh: git rev-parse --short HEAD
+  TAG: '{{.DATE}}-{{.REVISION}}'
 
 tasks:
   #
@@ -53,12 +58,6 @@ tasks:
   aws:ecr:push:
     deps:
       - docker:build
-    vars:
-      DATE:
-        sh: date '+%Y%m%d%H%M%S'
-      REVISION:
-        sh: git rev-parse --short HEAD
-      TAG: '{{.DATE}}-{{.REVISION}}'
     cmds:
       - task: aws:ecr:login
       - for: { var: DOCKER_IMAGES }
@@ -69,3 +68,30 @@ tasks:
         cmd: docker push {{.AWS_ECR_HOST}}/{{.DOCKER_IMAGE_PREFIX}}/{{.ITEM}}:{{.TAG}}
       - for: { var: DOCKER_IMAGES }
         cmd: docker push {{.AWS_ECR_HOST}}/{{.DOCKER_IMAGE_PREFIX}}/{{.ITEM}}:latest
+  #
+  # AWS ECS tasks
+  #
+  aws:ecs:verify:
+    cmds:
+      - ecspresso verify
+  aws:ecs:diff:
+    cmds:
+      - ecspresso diff
+  aws:ecs:deploy:dry-run:
+    cmds:
+      - ecspresso deploy --dry-run
+  aws:ecs:deploy:
+    deps:
+      - aws:ecr:push
+    env:
+      TAG: '{{.TAG}}'
+    cmds:
+      - ecspresso deploy
+  #
+  # Debug tasks
+  #
+  debug:print-env:
+    env:
+      TAG: '{{.TAG}}'
+    cmds:
+      - env
