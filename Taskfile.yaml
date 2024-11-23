@@ -71,22 +71,57 @@ tasks:
   #
   # AWS ECS tasks
   #
+  aws:ecs:setup:
+    vars:
+      FILES:
+        - infra/aws/ecspresso/ecs-service-definition
+        - infra/aws/ecspresso/ecs-service-task-definition
+    cmds:
+      - for: { var: FILES }
+        cmd: envsubst < {{.ITEM}}.jsonnet | jsonnet -o {{.ITEM}}.json -
   aws:ecs:verify:
+    deps:
+      - aws:ecs:setup
     cmds:
-      - ecspresso verify
-  aws:ecs:diff:
-    cmds:
-      - ecspresso diff
+      - ecspresso verify {{.CLI_ARGS}}
   aws:ecs:deploy:dry-run:
+    deps:
+      - aws:ecs:setup
     cmds:
       - ecspresso deploy --dry-run
   aws:ecs:deploy:
     deps:
       - aws:ecr:push
+      - aws:ecs:setup
     env:
       TAG: '{{.TAG}}'
     cmds:
-      - ecspresso deploy
+      - ecspresso deploy {{.CLI_ARGS}}
+  aws:ecs:diff:
+    deps:
+      - aws:ecs:setup
+    cmds:
+      - ecspresso diff {{.CLI_ARGS}}
+  aws:ecs:status:
+    deps:
+      - aws:ecs:setup
+    cmds:
+      - ecspresso status {{.CLI_ARGS}}
+  aws:ecs:stop:
+    deps:
+      - aws:ecs:setup
+    cmds:
+      - ecspresso deploy --skip-task-definition --tasks 0
+  aws:ecs:delete-service:
+    deps:
+      - aws:ecs:setup
+    cmds:
+      - ecspresso delete {{.CLI_ARGS}}
+  aws:ecs:deregister-task-definition:
+    deps:
+      - aws:ecs:setup
+    cmds:
+      - ecspresso deregister {{.CLI_ARGS}}
   #
   # Debug tasks
   #
